@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserva para o Evento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('Japan.jpg') no-repeat center center/cover;
+            background-size: cover;
+            position: relative;
+            overflow: hidden;
+        }
+        .background-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out; /* Transição mais lenta */
+            z-index: -1;
+        }
+        .background-layer.active {
+            opacity: 1;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 350px;
+        }
+        .container h2 {
+            color: white;
+            margin-bottom: 20px;
+        }
+        .input-box {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .input-box input, .input-box select, .input-box textarea {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .input-box input:focus, .input-box select:focus, .input-box textarea:focus {
+            outline: none;
+        }
+        .button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #007BFF;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        label {
+            color: white;
+            font-size: 14px;
+        }
+        .radio-group {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Alinhar à esquerda */
+            gap: 20px; /* Espaçamento maior entre as bolinhas */
+            margin-top: 10px; /* Espaço acima do grupo de rádio */
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* Espaçamento entre a bolinha e o texto */
+        }
+        .radio-group input[type="radio"] {
+            margin: 0;
+            transform: scale(1.2);
+        }
+        .input-box input::placeholder {
+            color: #aaa;
+            font-style: italic;
+        }
+        #convidados-info {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease-in-out;
+        }
+        #convidados-info.visible {
+            max-height: 500px; /* Ajuste conforme necessário */
+        }
+    </style>
+</head>
+<body>
+    <div class="background-layer active" id="background-layer-1" style="background-image: url('Japan.jpg');"></div>
+    <div class="background-layer" id="background-layer-2"></div>
+    <div class="container">
+        <h2>Reserva para o Evento</h2>
+        <form id="reservaForm" action="https://script.google.com/macros/s/AKfycbxoaciMwyQMUerXzxFCdxrYOL3nbXduZtKGlssgeq-u27g8o1FTxFRJx-z9WA6RP7k/exec" method="post">
+            <div class="input-box">
+                <label for="nome">Nome:</label>
+                <input type="text" id="nome" name="nome" placeholder="Nome e primeiro sobrenome" required>
+            </div>
+            <div class="input-box">
+                <label for="turma">Turma:</label>
+                <input type="text" id="turma" name="turma" required>
+            </div>
+            <div class="input-box">
+                <label for="atividade">O que gostaria de fazer?</label>
+                <select id="atividade" name="atividade">
+                    <option value="Trocar ou vender cartas">Trocar ou vender cartas</option>
+                    <option value="Trocar ou vender mangás">Trocar ou vender mangás</option>
+                    <option value="Participar de uma arte marcial">Participar de uma arte marcial</option>
+                    <option value="Jogar Games">Jogar Games</option>
+                    <option value="Jogar um campeonato de xadrez">Jogar um campeonato de xadrez</option>
+                    <option value="Outros">Outros (Escreva abaixo)</option>
+                </select>
+            </div>
+            <div class="input-box">
+                <label for="outros">Se escolheu "Outros", escreva aqui:</label>
+                <textarea id="outros" name="outros" rows="3"></textarea>
+            </div>
+            <div class="input-box">
+                <label>Levará convidados?</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" id="sim" name="convidados" value="Sim">
+                        Sim
+                    </label>
+                    <label>
+                        <input type="radio" id="nao" name="convidados" value="Não">
+                        Não
+                    </label>
+                </div>
+            </div>
+            <div id="convidados-info">
+                <div class="input-box">
+                    <label for="numero-convidados">Número de convidados:</label>
+                    <select id="numero-convidados" name="numero-convidados">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                    </select>
+                </div>
+                <div id="campos-convidados"></div>
+            </div>
+            <button class="button" type="submit">Reservar</button>
+        </form>
+    </div>
+
+    <script>
+        const imagensDeFundo = ["Japan.jpg", "Japan2.jpg", "Japan3.jpg"];
+        let indiceAtual = 1; // Começa com 1 porque a primeira imagem já está ativa
+        let intervalId = null;
+
+        // Função para trocar a imagem de fundo com transição suave
+        function trocarImagemDeFundo() {
+            const layer1 = document.getElementById("background-layer-1");
+            const layer2 = document.getElementById("background-layer-2");
+
+            // Alternar entre as camadas
+            if (layer1.classList.contains("active")) {
+                layer1.classList.remove("active");
+                layer2.style.backgroundImage = `url('${imagensDeFundo[indiceAtual]}')`;
+                layer2.classList.add("active");
+            } else {
+                layer2.classList.remove("active");
+                layer1.style.backgroundImage = `url('${imagensDeFundo[indiceAtual]}')`;
+                layer1.classList.add("active");
+            }
+
+            // Atualizar o índice da imagem
+            indiceAtual = (indiceAtual + 1) % imagensDeFundo.length;
+        }
+
+        // Iniciar a troca de imagens
+        function iniciarTrocaDeImagens() {
+            intervalId = setInterval(trocarImagemDeFundo, 7000); // Troca a cada 7 segundos
+        }
+
+        // Mostrar campos de convidados com animação
+        function mostrarCampos() {
+            const convidadosInfo = document.getElementById("convidados-info");
+            convidadosInfo.style.transition = "max-height 0.3s ease-in-out";
+            convidadosInfo.classList.add("visible");
+            gerarCamposConvidados();
+        }
+
+        // Ocultar campos de convidados com animação
+        function ocultarCampos() {
+            const convidadosInfo = document.getElementById("convidados-info");
+            convidadosInfo.style.transition = "max-height 0.3s ease-in-out";
+            convidadosInfo.classList.remove("visible");
+
+            // Limpar campos após a animação
+            setTimeout(() => {
+                document.getElementById("campos-convidados").innerHTML = "";
+            }, 300); // Tempo da animação
+        }
+
+        // Gerar campos de convidados dinamicamente
+        function gerarCamposConvidados() {
+            const numero = document.getElementById("numero-convidados").value;
+            const camposConvidados = document.getElementById("campos-convidados");
+            camposConvidados.innerHTML = ""; // Limpa os campos anteriores
+
+            for (let i = 1; i <= numero; i++) {
+                const div = document.createElement("div");
+                div.className = "input-box";
+
+                const label = document.createElement("label");
+                label.textContent = `Nome do convidado ${i}:`;
+                label.setAttribute("for", `convidado${i}`);
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.id = `convidado${i}`;
+                input.name = `convidado${i}`;
+                input.placeholder = "Nome e primeiro sobrenome";
+                input.required = true;
+
+                div.appendChild(label);
+                div.appendChild(input);
+                camposConvidados.appendChild(div);
+            }
+        }
+
+        // Adicionar eventos
+        document.getElementById("sim").addEventListener("click", mostrarCampos);
+        document.getElementById("nao").addEventListener("click", ocultarCampos);
+        document.getElementById("numero-convidados").addEventListener("change", gerarCamposConvidados);
+
+        // Iniciar troca de imagens ao carregar a página
+        window.onload = function() {
+            iniciarTrocaDeImagens();
+        }
+    </script>
+</body>
+</html>
