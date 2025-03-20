@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reserva para o Evento</title>
+    <!-- Adicionando o Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         * {
             margin: 0;
@@ -15,11 +17,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background: url('Japan.jpg') no-repeat center center/cover;
             background-size: cover;
             position: relative;
             overflow: hidden;
+            padding: 20px; /* Espaço para evitar que o conteúdo encoste nas bordas em celulares */
         }
         .background-layer {
             position: absolute;
@@ -39,11 +42,12 @@
         .container {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
-            padding: 30px;
+            padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             text-align: center;
-            width: 350px;
+            width: 100%;
+            max-width: 350px; /* Largura máxima para evitar que fique muito largo em desktops */
         }
         .container h2 {
             color: white;
@@ -101,13 +105,27 @@
             color: #aaa;
             font-style: italic;
         }
-        #convidados-info {
+        #convidados-info, #cosplay-info {
             overflow: hidden;
             max-height: 0;
             transition: max-height 0.3s ease-in-out;
         }
-        #convidados-info.visible {
+        #convidados-info.visible, #cosplay-info.visible {
             max-height: 500px; /* Ajuste conforme necessário */
+        }
+        .aviso {
+            color: #ffcc00;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .aviso-geral {
+            color: white;
+            font-size: 12px;
+            margin-top: 20px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -127,18 +145,34 @@
             </div>
             <div class="input-box">
                 <label for="atividade">O que gostaria de fazer?</label>
-                <select id="atividade" name="atividade">
+                <select id="atividade" name="atividade[]" multiple="multiple">
                     <option value="Trocar ou vender cartas">Trocar ou vender cartas</option>
                     <option value="Trocar ou vender mangás">Trocar ou vender mangás</option>
                     <option value="Participar de uma arte marcial">Participar de uma arte marcial</option>
-                    <option value="Jogar Games">Jogar Games</option>
+                    <option value="X1 de Mortal Kombat, Street Fighter e outros clássicos">X1 de Mortal Kombat, Street Fighter e outros clássicos</option>
                     <option value="Jogar um campeonato de xadrez">Jogar um campeonato de xadrez</option>
+                    <option value="Concurso de Cosplay">Concurso de Cosplay</option>
+                    <option value="Concurso de Cospobre">Concurso de Cospobre</option>
                     <option value="Outros">Outros (Escreva abaixo)</option>
                 </select>
             </div>
             <div class="input-box">
                 <label for="outros">Se escolheu "Outros", escreva aqui:</label>
                 <textarea id="outros" name="outros" rows="3"></textarea>
+            </div>
+            <!-- Seção de perguntas para cosplay/cospobre -->
+            <div id="cosplay-info">
+                <div class="input-box">
+                    <label for="personagem">Qual personagem?</label>
+                    <input type="text" id="personagem" name="personagem" placeholder="Nome do personagem">
+                </div>
+                <div class="input-box">
+                    <label for="anime-serie">De qual anime, série ou Dorama?</label>
+                    <input type="text" id="anime-serie" name="anime-serie" placeholder="Nome do anime, série ou Dorama">
+                </div>
+                <div class="aviso">
+                    A roupa deve estar coerente com o ambiente escolar.
+                </div>
             </div>
             <div class="input-box">
                 <label>Levará convidados?</label>
@@ -163,11 +197,36 @@
                 </div>
                 <div id="campos-convidados"></div>
             </div>
+            <!-- Aviso sobre a seleção de eventos -->
+            <div class="aviso-geral">
+                <strong>Atenção:</strong> Os eventos serão selecionados com base na maior frequência de escolhas. Nem todos os eventos poderão acontecer.
+            </div>
             <button class="button" type="submit">Reservar</button>
         </form>
     </div>
 
+    <!-- Adicionando o jQuery e o Select2 JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        // Inicializar o Select2
+        $(document).ready(function() {
+            $('#atividade').select2({
+                placeholder: "Selecione as opções", // Texto de placeholder
+                allowClear: true // Permite limpar as seleções
+            });
+
+            // Verificar seleção de atividades
+            $('#atividade').on('change', function() {
+                const atividades = $(this).val(); // Pega as opções selecionadas
+                if (atividades && (atividades.includes("Concurso de Cosplay") || atividades.includes("Concurso de Cospobre"))) {
+                    mostrarCosplayInfo();
+                } else {
+                    ocultarCosplayInfo();
+                }
+            });
+        });
+
         const imagensDeFundo = ["Japan.jpg", "Japan2.jpg", "Japan3.jpg"];
         let indiceAtual = 1; // Começa com 1 porque a primeira imagem já está ativa
         let intervalId = null;
@@ -242,6 +301,20 @@
                 div.appendChild(input);
                 camposConvidados.appendChild(div);
             }
+        }
+
+        // Mostrar campos de cosplay/cospobre com animação
+        function mostrarCosplayInfo() {
+            const cosplayInfo = document.getElementById("cosplay-info");
+            cosplayInfo.style.transition = "max-height 0.3s ease-in-out";
+            cosplayInfo.classList.add("visible");
+        }
+
+        // Ocultar campos de cosplay/cospobre com animação
+        function ocultarCosplayInfo() {
+            const cosplayInfo = document.getElementById("cosplay-info");
+            cosplayInfo.style.transition = "max-height 0.3s ease-in-out";
+            cosplayInfo.classList.remove("visible");
         }
 
         // Adicionar eventos
