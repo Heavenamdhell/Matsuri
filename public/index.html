@@ -127,6 +127,23 @@
             padding: 10px;
             border-radius: 5px;
         }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .toast.visible {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -164,11 +181,11 @@
             <div id="cosplay-info">
                 <div class="input-box">
                     <label for="personagem">Qual personagem?</label>
-                    <input type="text" id="personagem" name="personagem" placeholder="Nome do personagem">
+                    <input type="text" id="personagem" name="personagem" placeholder="Nome do personagem" required>
                 </div>
                 <div class="input-box">
                     <label for="anime-serie">De qual anime, série ou Dorama?</label>
-                    <input type="text" id="anime-serie" name="anime-serie" placeholder="Nome do anime, série ou Dorama">
+                    <input type="text" id="anime-serie" name="anime-serie" placeholder="Nome do anime, série ou Dorama" required>
                 </div>
                 <div class="aviso">
                     A roupa deve estar coerente com o ambiente escolar.
@@ -205,6 +222,9 @@
         </form>
     </div>
 
+    <!-- Aviso suspenso (toast) -->
+    <div id="toast" class="toast">Dados cadastrados com sucesso!</div>
+
     <!-- Adicionando o jQuery e o Select2 JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -225,6 +245,33 @@
                     ocultarCosplayInfo();
                 }
             });
+        });
+
+        // Função para exibir o toast
+        function mostrarToast() {
+            const toast = document.getElementById("toast");
+            toast.classList.add("visible");
+            setTimeout(() => {
+                toast.classList.remove("visible");
+            }, 3000); // O toast desaparece após 3 segundos
+        }
+
+        // Validar o formulário antes de enviar
+        document.getElementById("reservaForm").addEventListener("submit", function(event) {
+            const atividades = Array.from(document.getElementById("atividade").selectedOptions).map(option => option.value);
+            const personagem = document.getElementById("personagem").value;
+            const animeSerie = document.getElementById("anime-serie").value;
+
+            // Verificar se as perguntas do cosplay/cospobre foram preenchidas
+            if ((atividades.includes("Concurso de Cosplay") || atividades.includes("Concurso de Cospobre")) && (!personagem || !animeSerie)) {
+                alert("Por favor, preencha as perguntas sobre o cosplay/cospobre.");
+                event.preventDefault(); // Impede o envio do formulário
+                return;
+            }
+
+            // Exibir o toast e impedir o redirecionamento
+            event.preventDefault();
+            mostrarToast();
         });
 
         const imagensDeFundo = ["Japan.jpg", "Japan2.jpg", "Japan3.jpg"];
