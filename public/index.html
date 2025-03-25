@@ -105,12 +105,12 @@
             color: #aaa;
             font-style: italic;
         }
-        #convidados-info, #cosplay-info {
+        #convidados-info, #cosplay-info, #outros-info {
             overflow: hidden;
             max-height: 0;
-            transition: max-height 0.3s ease-in-out;
+            transition: max-height 0.5s ease-in-out; /* Animação mais lenta */
         }
-        #convidados-info.visible, #cosplay-info.visible {
+        #convidados-info.visible, #cosplay-info.visible, #outros-info.visible {
             max-height: 500px; /* Ajuste conforme necessário */
         }
         .aviso {
@@ -154,7 +154,7 @@
         <form id="reservaForm" action="https://script.google.com/macros/s/AKfycbxRllLUvbHCZJs6cVfqaTqpMIK9ARjemdeE1aBkLEfqaXdImq_d2zYoSVOHfA-BwHnC/exec" method="post">
             <div class="input-box">
                 <label for="nome">Nome:</label>
-                <input type="text" id="nome" name="nome" placeholder="Nome e primeiro sobrenome" required>
+                <input type="text" id="nome" name="nome" placeholder="Nome e o último sobrenome" required>
             </div>
             <div class="input-box">
                 <label for="turma">Turma:</label>
@@ -173,19 +173,21 @@
                     <option value="Outros">Outros (Escreva abaixo)</option>
                 </select>
             </div>
-            <div class="input-box">
-                <label for="outros">Se escolheu "Outros", escreva aqui:</label>
-                <textarea id="outros" name="outros" rows="3"></textarea>
+            <div id="outros-info">
+                <div class="input-box">
+                    <label for="outros">Se escolheu "Outros", escreva aqui:</label>
+                    <textarea id="outros" name="outros" rows="3"></textarea>
+                </div>
             </div>
             <!-- Seção de perguntas para cosplay/cospobre -->
             <div id="cosplay-info">
                 <div class="input-box">
                     <label for="personagem">Qual personagem?</label>
-                    <input type="text" id="personagem" name="personagem" placeholder="Nome do personagem" required>
+                    <input type="text" id="personagem" name="personagem" placeholder="Nome do personagem">
                 </div>
                 <div class="input-box">
                     <label for="anime-serie">De qual anime, série ou Dorama?</label>
-                    <input type="text" id="anime-serie" name="anime-serie" placeholder="Nome do anime, série ou Dorama" required>
+                    <input type="text" id="anime-serie" name="anime-serie" placeholder="Nome do anime, série ou Dorama">
                 </div>
                 <div class="aviso">
                     A roupa deve estar coerente com o ambiente escolar.
@@ -239,10 +241,25 @@
             // Verificar seleção de atividades
             $('#atividade').on('change', function() {
                 const atividades = $(this).val(); // Pega as opções selecionadas
+                
+                // Mostrar/ocultar campos de cosplay/cospobre
                 if (atividades && (atividades.includes("Concurso de Cosplay") || atividades.includes("Concurso de Cospobre"))) {
                     mostrarCosplayInfo();
+                    // Tornar os campos obrigatórios
+                    document.getElementById("personagem").required = true;
+                    document.getElementById("anime-serie").required = true;
                 } else {
                     ocultarCosplayInfo();
+                    // Remover a obrigatoriedade
+                    document.getElementById("personagem").required = false;
+                    document.getElementById("anime-serie").required = false;
+                }
+                
+                // Mostrar/ocultar campo "Outros"
+                if (atividades && atividades.includes("Outros")) {
+                    mostrarOutrosInfo();
+                } else {
+                    ocultarOutrosInfo();
                 }
             });
         });
@@ -262,16 +279,21 @@
             const personagem = document.getElementById("personagem").value;
             const animeSerie = document.getElementById("anime-serie").value;
 
-            // Verificar se as perguntas do cosplay/cospobre foram preenchidas
-            if ((atividades.includes("Concurso de Cosplay") || atividades.includes("Concurso de Cospobre")) && (!personagem || !animeSerie)) {
-                alert("Por favor, preencha as perguntas sobre o cosplay/cospobre.");
-                event.preventDefault(); // Impede o envio do formulário
-                return;
+            // Verificar se as perguntas do cosplay/cospobre foram preenchidas se necessário
+            if (atividades && (atividades.includes("Concurso de Cosplay") || atividades.includes("Concurso de Cospobre"))) {
+                if (!personagem || !animeSerie) {
+                    alert("Por favor, preencha as perguntas sobre o cosplay/cospobre.");
+                    event.preventDefault(); // Impede o envio do formulário
+                    return;
+                }
             }
 
             // Exibir o toast e impedir o redirecionamento
             event.preventDefault();
             mostrarToast();
+            
+            // Aqui você pode adicionar o código para enviar o formulário via AJAX se necessário
+            // setTimeout(() => { this.submit(); }, 1000);
         });
 
         const imagensDeFundo = ["Japan.jpg", "Japan2.jpg", "Japan3.jpg"];
@@ -306,7 +328,7 @@
         // Mostrar campos de convidados com animação
         function mostrarCampos() {
             const convidadosInfo = document.getElementById("convidados-info");
-            convidadosInfo.style.transition = "max-height 0.3s ease-in-out";
+            convidadosInfo.style.transition = "max-height 0.5s ease-in-out"; // Animação mais lenta
             convidadosInfo.classList.add("visible");
             gerarCamposConvidados();
         }
@@ -314,13 +336,13 @@
         // Ocultar campos de convidados com animação
         function ocultarCampos() {
             const convidadosInfo = document.getElementById("convidados-info");
-            convidadosInfo.style.transition = "max-height 0.3s ease-in-out";
+            convidadosInfo.style.transition = "max-height 0.5s ease-in-out"; // Animação mais lenta
             convidadosInfo.classList.remove("visible");
 
             // Limpar campos após a animação
             setTimeout(() => {
                 document.getElementById("campos-convidados").innerHTML = "";
-            }, 300); // Tempo da animação
+            }, 500); // Tempo da animação
         }
 
         // Gerar campos de convidados dinamicamente
@@ -341,7 +363,7 @@
                 input.type = "text";
                 input.id = `convidado${i}`;
                 input.name = `convidado${i}`;
-                input.placeholder = "Nome e primeiro sobrenome";
+                input.placeholder = "Nome e o último sobrenome";
                 input.required = true;
 
                 div.appendChild(label);
@@ -353,15 +375,29 @@
         // Mostrar campos de cosplay/cospobre com animação
         function mostrarCosplayInfo() {
             const cosplayInfo = document.getElementById("cosplay-info");
-            cosplayInfo.style.transition = "max-height 0.3s ease-in-out";
+            cosplayInfo.style.transition = "max-height 0.5s ease-in-out";
             cosplayInfo.classList.add("visible");
         }
 
         // Ocultar campos de cosplay/cospobre com animação
         function ocultarCosplayInfo() {
             const cosplayInfo = document.getElementById("cosplay-info");
-            cosplayInfo.style.transition = "max-height 0.3s ease-in-out";
+            cosplayInfo.style.transition = "max-height 0.5s ease-in-out";
             cosplayInfo.classList.remove("visible");
+        }
+        
+        // Mostrar campo "Outros" com animação
+        function mostrarOutrosInfo() {
+            const outrosInfo = document.getElementById("outros-info");
+            outrosInfo.style.transition = "max-height 0.5s ease-in-out";
+            outrosInfo.classList.add("visible");
+        }
+
+        // Ocultar campo "Outros" com animação
+        function ocultarOutrosInfo() {
+            const outrosInfo = document.getElementById("outros-info");
+            outrosInfo.style.transition = "max-height 0.5s ease-in-out";
+            outrosInfo.classList.remove("visible");
         }
 
         // Adicionar eventos
